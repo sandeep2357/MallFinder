@@ -1,22 +1,77 @@
 package com.example.sandeep.mallfinder;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.pm.PackageManager;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.util.Log;
+import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.vision.barcode.Barcode;
 
-public class MapsActivity extends FragmentActivity {
+
+public class MapsActivity extends FragmentActivity implements LocationListener {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
+    private LocationManager locatManager;
+    //private Barcode.GeoPoint curLocation;
+    private Location curLocation;
+
+    private static final String[] INITIAL_PERMS={
+            Manifest.permission.ACCESS_FINE_LOCATION
+    };
+
+    private static final int INITIAL_REQUEST = 1337;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
+        if(!isGooglePlayServicesAvailable()){
+           finish();
+        }
+
         setContentView(R.layout.activity_maps);
-        setUpMapIfNeeded();
+        SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+
+        mMap = supportMapFragment.getMap();
+        mMap.setMyLocationEnabled(true);
+
+
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        String bestProvider = locationManager.getBestProvider(criteria, true);
+        Log.e("After Best Provider","Before GPS");
+        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if(location!=null){
+            onLocationChanged(location);
+        }
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,20000,0,this);
+    }
+
+    private boolean isGooglePlayServicesAvailable(){
+        int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+        if(ConnectionResult.SUCCESS == status){
+            return true;
+        }else{
+            GooglePlayServicesUtil.getErrorDialog(status,this,0).show();
+            return false;
+        }
     }
 
     @Override
@@ -24,6 +79,7 @@ public class MapsActivity extends FragmentActivity {
         super.onResume();
         setUpMapIfNeeded();
     }
+
 
     /**
      * Sets up the map if it is possible to do so (i.e., the Google Play services APK is correctly
@@ -61,5 +117,30 @@ public class MapsActivity extends FragmentActivity {
      */
     private void setUpMap() {
         mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        double lat = location.getLatitude();
+        double lon = location.getLongitude();
+        LatLng latLng = new LatLng(lat, lon);
+        mMap.addMarker(new MarkerOptions().position(latLng));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
     }
 }
