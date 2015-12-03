@@ -1,6 +1,7 @@
 package com.example.sandeep.mallfinder;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
@@ -8,8 +9,10 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,7 +27,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.vision.barcode.Barcode;
 
 
-public class MapsActivity extends FragmentActivity implements LocationListener {
+public class MapsActivity extends FragmentActivity implements LocationListener,ActivityCompat.OnRequestPermissionsResultCallback {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private LocationManager locatManager;
@@ -34,34 +37,47 @@ public class MapsActivity extends FragmentActivity implements LocationListener {
     private static final String[] INITIAL_PERMS={
             Manifest.permission.ACCESS_FINE_LOCATION
     };
+    private final int MY_PERMISSIONS_ACCESS_FINE_LOCATION = 0;
 
     private static final int INITIAL_REQUEST = 1337;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //requestPermissions(INITIAL_PERMS, INITIAL_REQUEST);
         if(!isGooglePlayServicesAvailable()){
            finish();
         }
-
         setContentView(R.layout.activity_maps);
-        SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        int mapReceivePermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
 
-        mMap = supportMapFragment.getMap();
-        mMap.setMyLocationEnabled(true);
+        if(mapReceivePermissionCheck != PackageManager.PERMISSION_GRANTED){
+            if(ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_FINE_LOCATION)){
+
+            }else{
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_ACCESS_FINE_LOCATION);
+            }
+        }else{
+            SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+
+            mMap = supportMapFragment.getMap();
+            mMap.setMyLocationEnabled(true);
 
 
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        Criteria criteria = new Criteria();
-        String bestProvider = locationManager.getBestProvider(criteria, true);
-        Log.e("After Best Provider","Before GPS");
-        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        if(location!=null){
-            onLocationChanged(location);
+            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+            Criteria criteria = new Criteria();
+            String bestProvider = locationManager.getBestProvider(criteria, true);
+            Log.e("After Best Provider","Before GPS");
+            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            if(location!=null){
+                onLocationChanged(location);
+            }
+
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,20000,0,this);
         }
 
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,20000,0,this);
+
     }
 
     private boolean isGooglePlayServicesAvailable(){
@@ -71,6 +87,38 @@ public class MapsActivity extends FragmentActivity implements LocationListener {
         }else{
             GooglePlayServicesUtil.getErrorDialog(status,this,0).show();
             return false;
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String Permissions[], int [] grantResults){
+        switch(requestCode){
+            case MY_PERMISSIONS_ACCESS_FINE_LOCATION:{
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+
+                    SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+
+                    mMap = supportMapFragment.getMap();
+                    mMap.setMyLocationEnabled(true);
+
+
+                    LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+                    Criteria criteria = new Criteria();
+                    String bestProvider = locationManager.getBestProvider(criteria, true);
+                    Log.e("After Best Provider","Before GPS");
+                    Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    if(location!=null){
+                        onLocationChanged(location);
+                    }
+
+                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,20000,0,this);
+                }else {
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                            MY_PERMISSIONS_ACCESS_FINE_LOCATION);
+                }
+                return;
+            }
         }
     }
 
@@ -123,6 +171,9 @@ public class MapsActivity extends FragmentActivity implements LocationListener {
     public void onLocationChanged(Location location) {
         double lat = location.getLatitude();
         double lon = location.getLongitude();
+
+        Log.d("Latitude is ",String.valueOf(lat));
+        Log.d("longitude is",String.valueOf(lon));
         LatLng latLng = new LatLng(lat, lon);
         mMap.addMarker(new MarkerOptions().position(latLng));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
