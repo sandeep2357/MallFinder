@@ -27,14 +27,13 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.vision.barcode.Barcode;
 
 
-public class MapsActivity extends FragmentActivity implements LocationListener,ActivityCompat.OnRequestPermissionsResultCallback {
+public class MapsActivity extends FragmentActivity implements LocationListener, ActivityCompat.OnRequestPermissionsResultCallback {
 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private LocationManager locatManager;
-    //private Barcode.GeoPoint curLocation;
     private Location curLocation;
 
-    private static final String[] INITIAL_PERMS={
+    private static final String[] INITIAL_PERMS = {
             Manifest.permission.ACCESS_FINE_LOCATION
     };
     private final int MY_PERMISSIONS_ACCESS_FINE_LOCATION = 0;
@@ -44,74 +43,44 @@ public class MapsActivity extends FragmentActivity implements LocationListener,A
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(!isGooglePlayServicesAvailable()){
-           finish();
+        if (!isGooglePlayServicesAvailable()) {
+            finish();
         }
         setContentView(R.layout.activity_maps);
         int mapReceivePermissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
 
-        if(mapReceivePermissionCheck != PackageManager.PERMISSION_GRANTED){
-            if(ActivityCompat.shouldShowRequestPermissionRationale(this,Manifest.permission.ACCESS_FINE_LOCATION)){
+        if (mapReceivePermissionCheck != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
 
-            }else{
+            } else {
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_ACCESS_FINE_LOCATION);
             }
-        }else{
-            SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-
-            mMap = supportMapFragment.getMap();
-            mMap.setMyLocationEnabled(true);
-
-
-            LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-            Criteria criteria = new Criteria();
-            String bestProvider = locationManager.getBestProvider(criteria, true);
-            Log.e("After Best Provider","Before GPS");
-            Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if(location!=null){
-                onLocationChanged(location);
-            }
-
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,20000,0,this);
+        } else {
+            createMap();
         }
 
 
     }
 
-    private boolean isGooglePlayServicesAvailable(){
+    private boolean isGooglePlayServicesAvailable() {
         int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-        if(ConnectionResult.SUCCESS == status){
+        if (ConnectionResult.SUCCESS == status) {
             return true;
-        }else{
-            GooglePlayServicesUtil.getErrorDialog(status,this,0).show();
+        } else {
+            GooglePlayServicesUtil.getErrorDialog(status, this, 0).show();
             return false;
         }
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String Permissions[], int [] grantResults){
-        switch(requestCode){
-            case MY_PERMISSIONS_ACCESS_FINE_LOCATION:{
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+    public void onRequestPermissionsResult(int requestCode, String Permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_ACCESS_FINE_LOCATION: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    createMap();
 
-                    SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-
-                    mMap = supportMapFragment.getMap();
-                    mMap.setMyLocationEnabled(true);
-
-
-                    LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-                    Criteria criteria = new Criteria();
-                    String bestProvider = locationManager.getBestProvider(criteria, true);
-                    Log.e("After Best Provider","Before GPS");
-                    Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-                    if(location!=null){
-                        onLocationChanged(location);
-                    }
-
-                    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,20000,0,this);
                 }else {
                     ActivityCompat.requestPermissions(this,
                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -122,10 +91,42 @@ public class MapsActivity extends FragmentActivity implements LocationListener,A
         }
     }
 
+
+    // In emulator, the location changed wont work. you have to provide it manually.
+    private void createMap(){
+
+        SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+
+        Log.d("Map is",String.valueOf(mMap));
+        mMap = supportMapFragment.getMap();
+        mMap.setMyLocationEnabled(true);
+
+
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        //Criteria criteria = new Criteria();
+        //String bestProvider = locationManager.getBestProvider(criteria, true);
+        Log.e("After Best Provider", "Before GPS");
+
+        // Note : In emulator, the latitude and longitude has to be sent for the first time. otherwise location will be null
+
+        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER); // Get the last known location.
+        Log.d("Latitude is ",String.valueOf(location));
+        if(location!=null) {
+            onLocationChanged(location);
+        }
+
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,2000,0,this); // Line which checks for location changes and send this to
+                                                                                            // onLocationChanged method of LocationListener
+
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
-        setUpMapIfNeeded();
+        //setUpMapIfNeeded();
+        Log.e("Entered On Resume","On Resume"); // on every close and open onresume is getting called
+
+        createMap();
     }
 
 
@@ -167,17 +168,20 @@ public class MapsActivity extends FragmentActivity implements LocationListener,A
         mMap.addMarker(new MarkerOptions().position(new LatLng(0, 0)).title("Marker"));
     }
 
+
+    // Notes: The following four methods are part of LocationListener Interface
+
     @Override
     public void onLocationChanged(Location location) {
         double lat = location.getLatitude();
         double lon = location.getLongitude();
-
+        Log.e("Location Changed","Working");
         Log.d("Latitude is ",String.valueOf(lat));
         Log.d("longitude is",String.valueOf(lon));
         LatLng latLng = new LatLng(lat, lon);
         mMap.addMarker(new MarkerOptions().position(latLng));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(15));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(13));
     }
 
     @Override
