@@ -1,5 +1,7 @@
 package com.example.sandeep.mallfinder;
 
+import android.os.AsyncTask;
+
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
@@ -14,6 +16,9 @@ import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,7 +29,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.vision.barcode.Barcode;
 
 
 public class MapsActivity extends FragmentActivity implements LocationListener, ActivityCompat.OnRequestPermissionsResultCallback {
@@ -32,6 +36,12 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private LocationManager locatManager;
     private Location curLocation;
+    private static final String GOOGLE_API_KEY="AIzaSyDhtb6xzXVUIi0KMi6JszTD1PPVMZEOOzU";
+    private int PROXIMITY_RADIUS = 5000;
+    private EditText place_text;
+    private Button btnFind;
+    double latitude=0;
+    double longitude=0;
 
     private static final String[] INITIAL_PERMS = {
             Manifest.permission.ACCESS_FINE_LOCATION
@@ -80,7 +90,6 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
             case MY_PERMISSIONS_ACCESS_FINE_LOCATION: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     createMap();
-
                 }else {
                     ActivityCompat.requestPermissions(this,
                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -95,20 +104,19 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
     // In emulator, the location changed wont work. you have to provide it manually.
     private void createMap(){
 
+        place_text = (EditText) findViewById(R.id.placeText);
+        btnFind = (Button) findViewById(R.id.btn_find);
         SupportMapFragment supportMapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-
         Log.d("Map is",String.valueOf(mMap));
+
         mMap = supportMapFragment.getMap();
         mMap.setMyLocationEnabled(true);
-
 
         LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         //Criteria criteria = new Criteria();
         //String bestProvider = locationManager.getBestProvider(criteria, true);
-        Log.e("After Best Provider", "Before GPS");
 
         // Note : In emulator, the latitude and longitude has to be sent for the first time. otherwise location will be null
-
         Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER); // Get the last known location.
         Log.d("Latitude is ",String.valueOf(location));
         if(location!=null) {
@@ -116,8 +124,27 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
         }
 
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,2000,0,this); // Line which checks for location changes and send this to
-                                                                                            // onLocationChanged method of LocationListener
+                                                                                        // onLocationChanged method of LocationListener
 
+        btnFind.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String type = place_text.getText().toString();
+                StringBuilder googlePlacesUrl = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
+                googlePlacesUrl.append("location="+latitude+","+longitude);
+                googlePlacesUrl.append("&radius="+PROXIMITY_RADIUS);
+                googlePlacesUrl.append("&keyword="+type);
+                googlePlacesUrl.append("&sensor=true");
+                googlePlacesUrl.append("&key="+GOOGLE_API_KEY);
+
+                PlacesTask placesTask = new PlacesTask();
+                Object[] toPass = new Object[2];
+                toPass[0] = mMap;
+                toPass[1] = googlePlacesUrl.toString();
+                placesTask.execute(toPass);
+
+            }
+        });
     }
 
     @Override
@@ -173,13 +200,13 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
 
     @Override
     public void onLocationChanged(Location location) {
-        double lat = location.getLatitude();
-        double lon = location.getLongitude();
+        latitude = location.getLatitude();
+        longitude = location.getLongitude();
         Log.e("Location Changed","Working");
-        Log.d("Latitude is ",String.valueOf(lat));
-        Log.d("longitude is",String.valueOf(lon));
-        LatLng latLng = new LatLng(lat, lon);
-        mMap.addMarker(new MarkerOptions().position(latLng));
+        Log.d("Latitude is ",String.valueOf(latitude));
+        Log.d("longitude is",String.valueOf(longitude));
+        LatLng latLng = new LatLng(latitude, longitude);
+        mMap.addMarker(new MarkerOptions().position(latLng).title("Hyderabad"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(13));
     }

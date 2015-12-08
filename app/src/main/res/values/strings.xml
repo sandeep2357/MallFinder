@@ -1,4 +1,19 @@
 <resources>
     <string name="app_name">MallFinder</string>
     <string name="title_activity_maps">MallFinder</string>
+    <string name="str_btn_find">Find</string>
+
+    <string-array name="place_type">
+        <item>atm</item>
+        <item>hospital</item>
+        <item>restaurant</item>
+        <item>movie_theatre</item>
+    </string-array>
+
+    <string-array name="place_type_name">
+        <item>ATM</item>
+        <item>Hospital</item>
+        <item>Restaurant</item>
+        <item>Movie Theatre</item>
+    </string-array>
 </resources>
