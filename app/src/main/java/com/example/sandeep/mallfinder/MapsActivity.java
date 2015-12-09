@@ -36,8 +36,8 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
     private GoogleMap mMap; // Might be null if Google Play services APK is not available.
     private LocationManager locatManager;
     private Location curLocation;
-    private static final String GOOGLE_API_KEY="AIzaSyDhtb6xzXVUIi0KMi6JszTD1PPVMZEOOzU";
-    private int PROXIMITY_RADIUS = 5000;
+    private static final String GOOGLE_API_KEY="AIzaSyDvRaH7FJE-00V_9evLokw0f2y4ZzGXNdU";  // this is server API key not the Android API key
+    private int PROXIMITY_RADIUS = 500;
     private EditText place_text;
     private Button btnFind;
     double latitude=0;

@@ -31,6 +31,8 @@ public class PlacesTask extends AsyncTask<Object,Integer, String>{
         }catch(Exception e){
             Log.d("Background Task:Getting Places data", e.toString());
         }
+        Log.d("Google Places Data is",googlePlacesData);
+        return googlePlacesData;
     }
 
     // Executed after the complete execution of doInBackground method.
