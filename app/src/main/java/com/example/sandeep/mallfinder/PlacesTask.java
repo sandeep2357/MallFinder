@@ -35,7 +35,7 @@ public class PlacesTask extends AsyncTask<Object,Integer, String>{
         return googlePlacesData;
     }
 
-    // Executed after the complete execution of doInBackground method.
+    // Executed after the complete execution of doInBackground method. with output of doInBackground as 'result'
     @Override
     protected void onPostExecute(String result){
         ParserTask parserTask = new ParserTask();

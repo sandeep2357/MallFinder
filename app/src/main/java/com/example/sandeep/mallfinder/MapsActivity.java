@@ -137,10 +137,13 @@ public class MapsActivity extends FragmentActivity implements LocationListener, 
                 googlePlacesUrl.append("&sensor=true");
                 googlePlacesUrl.append("&key="+GOOGLE_API_KEY);
 
+                /**Creating a non-ui thread to download the google place details*/
                 PlacesTask placesTask = new PlacesTask();
                 Object[] toPass = new Object[2];
                 toPass[0] = mMap;
                 toPass[1] = googlePlacesUrl.toString();
+
+                /** Invokes the "doInBackground() method of class placesTask"*/
                 placesTask.execute(toPass);
 
             }

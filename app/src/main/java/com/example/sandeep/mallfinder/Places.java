@@ -13,24 +13,29 @@ import java.util.List;
  */
 public class Places {
 
+    /** Receives a JSON object and returns a list */
     public List<HashMap<String,String>> parse(JSONObject jsonObject){
         JSONArray jsonArray = null;
         try{
+            /** Retrieves all the elements in the 'googlePlacesJson' Object*/
             jsonArray = jsonObject.getJSONArray("results");
         }catch(JSONException e){
             e.printStackTrace();
         }
-
+        /**Invoking getPlaces with a array of Json Object where each object represents a place*/
         return getPlaces(jsonArray);
     }
+
 
     private List<HashMap<String, String>> getPlaces(JSONArray jsonArray){
         int placesCount = jsonArray.length();
         List<HashMap<String, String>> placesList = new ArrayList<HashMap<String, String>>();
         HashMap<String,String > placeMap = null;
 
+        /**Taking each place and adds to list object*/
         for(int i=0; i<placesCount;i++){
             try{
+                /**Call getPlace with place JSON object to parse the place */
                 placeMap = getPlace((JSONObject) jsonArray.get(i));
                 placesList.add(placeMap);
             }catch(JSONException e){
@@ -49,6 +54,7 @@ public class Places {
         String reference = "";
 
         try{
+            /**Retrieving place name if available*/
             if(!googlePlaceJson.isNull("name")){
                 placeName = googlePlaceJson.getString("name");
             }
